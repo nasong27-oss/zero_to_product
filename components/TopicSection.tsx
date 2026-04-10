@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-const TOPIC_PASSWORD = "0407";
+const TOPIC_PASSWORD = "0417";
 
 export default function TopicSection() {
   const [revealed, setRevealed] = useState(false);
@@ -27,7 +27,12 @@ export default function TopicSection() {
     }
   }
 
-  function handleClick() {
+  function handleCollapse() {
+    setRevealed(false);
+    localStorage.removeItem("topicRevealed");
+  }
+
+  function handleRevealClick() {
     if (!revealed) setShowModal(true);
   }
 
@@ -45,28 +50,38 @@ export default function TopicSection() {
     }
   }
 
+  function closeModal() {
+    setShowModal(false);
+    setInput("");
+    setError("");
+  }
+
   return (
     <>
-      <div
-        onClick={handleClick}
-        className={`w-full rounded-2xl p-6 md:p-8 mb-6 text-center cursor-pointer transition-all duration-300 ${
-          revealed
-            ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white"
-            : "bg-gradient-to-r from-gray-700 to-gray-900 text-white hover:from-gray-600 hover:to-gray-800"
-        }`}
-      >
+      <div className="w-full rounded-2xl mb-6 overflow-hidden">
+        {/* Revealed state */}
         {revealed ? (
-          <div>
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6 md:p-8 text-center">
             <p className="text-sm font-medium opacity-80 mb-2">오늘의 주제</p>
             <p className="text-2xl md:text-3xl font-bold whitespace-pre-wrap">
               {content || "주제가 설정되지 않았습니다."}
             </p>
+            <button
+              onClick={handleCollapse}
+              className="mt-4 text-xs text-white/60 hover:text-white/90 underline underline-offset-2 transition-colors"
+            >
+              접기
+            </button>
           </div>
         ) : (
-          <div>
+          /* Hidden state */
+          <button
+            onClick={handleRevealClick}
+            className="w-full bg-gradient-to-r from-gray-700 to-gray-900 text-white hover:from-gray-600 hover:to-gray-800 transition-all duration-300 p-6 md:p-8 text-center"
+          >
             <p className="text-2xl md:text-3xl font-bold">🔒 오늘의 주제는?</p>
             <p className="text-sm opacity-70 mt-2">클릭하여 확인</p>
-          </div>
+          </button>
         )}
       </div>
 
@@ -89,7 +104,7 @@ export default function TopicSection() {
               <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={() => { setShowModal(false); setInput(""); setError(""); }}
+                  onClick={closeModal}
                   className="flex-1 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50"
                 >
                   취소

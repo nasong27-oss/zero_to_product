@@ -90,7 +90,15 @@ export default function Home() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <h1 className="text-lg font-bold text-gray-900">⚡ 바이브코딩 해커톤</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-lg font-bold text-gray-900">⚡ 바이브코딩 해커톤</h1>
+            <a
+              href="/admin"
+              className="text-xs text-gray-300 hover:text-gray-500 transition-colors"
+            >
+              admin
+            </a>
+          </div>
           {user && (
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">
