@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+model Topic {
+  id      Int    @id @default(1)
+  content String @default("") @db.Text
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  teamNumber  Int
+  title       String
+  url         String
+  description String   @db.Text
+  password    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  votes       Vote[]
+}
+
+model Vote {
+  id            String   @id @default(cuid())
+  voterName     String
+  voterTeam     Int?
+  isParticipant Boolean
+  projectId     String
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+
+  @@unique([voterName, voterTeam])
+}
+
+model VotingState {
+  id     Int    @id @default(1)
+  status String @default("not_started")
+}
