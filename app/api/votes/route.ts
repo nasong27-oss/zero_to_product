@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 
 export async function GET() {
   try {
@@ -40,11 +41,17 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check for duplicate vote
+    const resolvedTeam = isParticipant && voterTeam ? Number(voterTeam) : null;
+
+    // Application-level duplicate check
+    // For non-participants (voterTeam=null), PostgreSQL unique constraint doesn't
+    // deduplicate NULLs, so we handle it explicitly here.
     const existingVote = await prisma.vote.findFirst({
       where: {
         voterName,
-        voterTeam: isParticipant && voterTeam ? Number(voterTeam) : null,
+        ...(resolvedTeam !== null
+          ? { voterTeam: resolvedTeam }
+          : { isParticipant: false }),
       },
     });
 
@@ -52,16 +59,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "이미 투표하셨습니다." }, { status: 400 });
     }
 
-    const vote = await prisma.vote.create({
-      data: {
-        voterName,
-        voterTeam: isParticipant && voterTeam ? Number(voterTeam) : null,
-        isParticipant: Boolean(isParticipant),
-        projectId,
-      },
-    });
-
-    return NextResponse.json(vote, { status: 201 });
+    try {
+      const vote = await prisma.vote.create({
+        data: {
+          voterName,
+          voterTeam: resolvedTeam,
+          isParticipant: Boolean(isParticipant),
+          projectId,
+        },
+      });
+      return NextResponse.json(vote, { status: 201 });
+    } catch (err) {
+      // Catch unique constraint violation (race condition safety net)
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+        return NextResponse.json({ error: "이미 투표하셨습니다." }, { status: 400 });
+      }
+      throw err;
+    }
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Failed to cast vote" }, { status: 500 });
